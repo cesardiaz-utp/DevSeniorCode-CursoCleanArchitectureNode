@@ -25,6 +25,7 @@
         "fintech",
         "Fintech",
         "HATEOAS",
+        "hipercomplejas",
         "hipermedia",
         "HMAC",
         "HMACSHA",
@@ -44,6 +45,7 @@
         "instanciando",
         "instanciar",
         "Interactors",
+        "Kysely",
         "Liskov",
         "logueado",
         "loguearte",
@@ -52,6 +54,7 @@
         "Mapeador",
         "mapeándolos",
         "microservicio",
+        "microservicios",
         "milisegundo",
         "milisegundos",
         "mockeado",
@@ -62,6 +65,7 @@
         "parsea",
         "parsear",
         "polimórfica",
+        "polimórficas",
         "postgres",
         "precalculadas",
         "reactividad",
@@ -80,6 +84,8 @@
         "sanitizado",
         "sanitizar",
         "súbelo",
+        "subóptimo",
+        "systeminfo",
         "Testabilidad",
         "tipada",
         "tipadas",
@@ -88,8 +94,11 @@
         "tipados",
         "transicionar",
         "Turborepo",
+        "UEFI",
         "ultrarrápido",
         "underbrace",
-        "usecases"
+        "usecases",
+        "virtualización",
+        "Virtualización"
     ]
 }

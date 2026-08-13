@@ -308,7 +308,7 @@ En nuestra Fintech, mapeamos las siguientes invariantes del mundo real a código
 
 ## 3. LABORATORIO PRÁCTICO: LIVE CODING (75 min)
 
-Nota para los estudiantes: A partir de aquí, pasamos del diseño en la pizarra al código real. Abran sus editores, preparen sus terminales y sigan el paso a paso detallado.
+_Nota para los estudiantes_: A partir de aquí, pasamos del diseño en la pizarra al código real. Abran sus editores, preparen sus terminales y sigan el paso a paso detallado.
 
 ### Paso 1: Configuración Estricta del Entorno (Tooling)
 

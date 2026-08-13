@@ -4,6 +4,9 @@ El curso **Full Stack Software Architecture** está diseñado para dotar a los e
 
 A lo largo del programa, los estudiantes aplicarán los principios de **Clean Architecture** (Arquitectura Limpia) y diseño guiado por el dominio (DDD básico) utilizando un stack moderno de tecnologías compuestas por **TypeScript, Node.js, PostgreSQL, Prisma ORM y React**. Todo el aprendizaje se articulará en torno a la construcción de un sistema financiero (_Fintech Core App_) con manejo de operaciones atómicas, autenticación segura y persistencia de datos relacional.
 
+## Módulo 0 - Herramientas y Especificación de requisitos
+
+- [Tools](modulo0/Herramientas.md) - Guía de Instalación de Herramientas
 - [SRS](modulo0/SRS.md) - Especificación de requisitos del sistema (SRS)
 
 ## Módulo 1 - Arquitectura Limpia y Modelado del Dominio (Backend)
