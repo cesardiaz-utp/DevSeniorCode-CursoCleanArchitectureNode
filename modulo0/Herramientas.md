@@ -141,6 +141,8 @@ Docker Desktop es una aplicación que facilita la construcción, el envío y la 
   - Instala el paquete usando el gestor de paquetes de tu sistema. Por ejemplo, en Ubuntu: `sudo apt-get update && sudo apt-get install ./docker-desktop-<version>-<arch>.deb`.
   - Inicia Docker Desktop desde el menú de aplicaciones de tu escritorio o ejecutando `systemctl --user start docker-desktop` en una terminal.
 
+[![Docker Desktop](https://img.youtube.com/vi/rIPI41LMfFQ/sddefault.jpg)](https://youtu.be/rIPI41LMfFQ)
+
 ## 4. Postgresql (Opcional)
 
 PostgreSQL es un sistema de gestión de bases de datos relacionales de código abierto y potente. En este curso, lo utilizaremos para almacenar de forma persistente toda la información de nuestra aplicación (reservas, usuarios, productos, etc.), aprovechando su robustez y compatibilidad con Spring Data JPA.
