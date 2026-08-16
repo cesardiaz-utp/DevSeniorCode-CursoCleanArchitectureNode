@@ -357,19 +357,19 @@ Primero, instalaremos las dependencias necesarias. Asegúrate de estar en la ra�
 Instalamos la CLI de Prisma como dependencia de desarrollo
 
 ```bash copy
-npm install prisma dotenv --save-dev
+pnpm add -D prisma dotenv
 ```
 
 Instalamos el Cliente de Prisma para ejecución
 
 ```bash copy
-npm install @prisma/client
+pnpm add @prisma/client
 ```
 
 Inicializamos Prisma (Esto creará la carpeta prisma y el archivo .env)
 
 ```bash copy
-npx prisma init
+pnpm exec prisma init
 ```
 
 El comando `init` habrá creado un archivo `.env` en la raíz. Debemos configurarlo apuntando a nuestra instancia de PostgreSQL (ya sea instalada localmente o corriendo en un contenedor de Docker). Asegúrate de reemplazar las credenciales por las tuyas:

@@ -319,26 +319,25 @@ Inicialización de la carpeta y `package.json`
 ```bash copy
 mkdir fintech-core-app
 cd fintech-core-app
-npm init -y
+pnpm init -y
 ```
 
 Instalación de TypeScript y dependencias de desarrollo esenciales
 
 ```bash copy
-npm install -D typescript ts-node-dev @types/node eslint prettier
+pnpm add -D typescript ts-node-dev @types/node eslint prettier
 ```
 
 Instalación de librería matemática para precisión monetaria exacta
 
 ```bash copy
-npm install decimal.js
-npm install -D @types/decimal.js
+pnpm add decimal.js
 ```
 
 Generamos el archivo de configuración base de TypeScript:
 
 ```bash copy
-npx tsc --init
+pnpm exec tsc --init
 ```
 
 **Paso Crítico**: El compilador es nuestro primer tester. Modificamos el tsconfig.json para garantizar el rigor máximo exigido por el Definition of Done (DoD). Buscamos prevenir el infame "Billion Dollar Mistake" (Errores de Referencia Nula) y tipados dinámicos accidentales.

@@ -9,14 +9,54 @@ Node.js es un entorno de ejecución de JavaScript en el servidor que incluye `np
 - **Descarga**: Ve a [nodejs.org](https://nodejs.org/) y selecciona la versión 24 (elige la LTS para máxima estabilidad). Esta instalación incluye el runtime de Node y el administrador de paquetes `npm`.
 - **Verificación**:
 
-  ```bash
+  ```bash copy
   node -v
-  npm -v
   ```
 
-  Estos comandos te muestran las versiones instaladas; confirma que ambas herramientas están disponibles antes de avanzar.
+  - Gestor de paquetes **NPM** (por defecto)
 
-[![Instalación NodeJS 24](https://img.youtube.com/vi/mf9D-t8mlM4/sddefault.jpg)](https://youtu.be/mf9D-t8mlM4)
+    Para verificar la version de NPM:
+
+    ```bash copy
+    npm -v
+    ```
+
+    **Nota 1**: Si estas usando PowerShell en Windows y te sale un error al intentar validar la versión de NPM:
+
+    ```terminal
+    npm : File C:\Program Files\nodejs\npm.ps1 cannot be loaded because running scripts is disabled on this system. For more information, see about_Execution_Policies at https:/go.microsoft.com/fwlink/?LinkID=135170.
+    At line:1 char:1
+    + npm -v
+    + ~~~
+        + CategoryInfo          : SecurityError: (:) [], PSSecurityException
+        + FullyQualifiedErrorId : UnauthorizedAccess
+    ```
+
+    Debes ejecutar el siguiente comando para habilitar la ejecución de scripts en PowerShell:
+
+    ```powershell copy
+    Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+    ```
+
+    Con esto, al ejecutar la verificación de NPM te debe devolver la version actual sin errores.
+
+    [![Instalación NodeJS 24](https://img.youtube.com/vi/mf9D-t8mlM4/sddefault.jpg)](https://youtu.be/mf9D-t8mlM4)
+
+  - Gestor de paquetes **PNPM**
+
+    Dado las recientes noticias sobre las vulnerabilidades del gestor de paquetes NPM, entonces es posible reemplazarlo por [PNPM](https://pnpm.io) o [YARN](https://yarnpkg.com). En esta guía seguiremos usando **PNPM**.
+
+    Para instalar la ultima version de PNPM:
+
+    ```bash copy
+    npm install -g pnpm
+    ```
+
+    Para verificar la version instalada:
+
+    ```bash copy
+    pnpm -v
+    ```
 
 ## 2. Git y GitHub
 
@@ -48,13 +88,23 @@ Docker Desktop es una aplicación que facilita la construcción, el envío y la 
     - **Requisitos**: Windows 10/11 de 64 bits (compilación 19044 o superior), 4 GB de RAM y soporte para WSL 2.
     - **Comando (PowerShell/CMD)**: Abre una terminal y ejecuta `systeminfo`. Busca la sección "Hyper-V Requirements". Si "Virtualization Enabled In Firmware" dice "Yes", estás listo.
 
-      ```bash
+      ```bash copy
       systeminfo
       ```
 
-  - **Verificación en macOS**:
-    - **Requisitos**: macOS 12 (Monterey) o superior, 4 GB de RAM.
-    - **Comando (Terminal)**: Los Macs modernos (con Apple Silicon o Intel post-2010) suelen tener la virtualización por defecto. Para verificar en un Mac con Intel, puedes ejecutar:
+      También, es necesario confirmar que la version de WSL2 (Windows Subsystem for Linux) está instalada en la version adecuada:
+
+      ```bash copy
+      wsl --version
+      ```
+
+      Este comando muestra la versión de WSL instalada. Si ves "WSL Version: 2.X.X", tienes WSL 2. Si no aparece un número de versión, tienes WSL 1.
+
+      Si tienes privilegios de administrador, puedes instalar actualizaciones del kernel de WSL utilizando PowerShell o el Símbolo del sistema. Escribe PowerShell o Símbolo del sistema en la barra de búsqueda de Windows y selecciona "Ejecutar como administrador". Luego, escribe `wsl --update` y presiona Enter.
+
+- **Verificación en macOS**:
+  - **Requisitos**: macOS 12 (Monterey) o superior, 4 GB de RAM.
+  - **Comando (Terminal)**: Los Macs modernos (con Apple Silicon o Intel post-2010) suelen tener la virtualización por defecto. Para verificar en un Mac con Intel, puedes ejecutar:
 
       ```bash
       sysctl -a | grep -o VMX
@@ -62,9 +112,9 @@ Docker Desktop es una aplicación que facilita la construcción, el envío y la 
 
       Si el comando devuelve "VMX", la virtualización está soportada. Los Mac con Apple Silicon la soportan de forma nativa.
 
-  - **Verificación en Linux**:
-    - **Requisitos**: Una distribución de 64 bits con entorno de escritorio (Ubuntu, Debian, Fedora, Arch), 4 GB de RAM y soporte para KVM.
-    - **Comando (Terminal)**: Para comprobar si tu CPU soporta virtualización de hardware, ejecuta:
+- **Verificación en Linux**:
+  - **Requisitos**: Una distribución de 64 bits con entorno de escritorio (Ubuntu, Debian, Fedora, Arch), 4 GB de RAM y soporte para KVM.
+  - **Comando (Terminal)**: Para comprobar si tu CPU soporta virtualización de hardware, ejecuta:
 
       ```bash
       grep -c -E '(vmx|svm)' /proc/cpuinfo
