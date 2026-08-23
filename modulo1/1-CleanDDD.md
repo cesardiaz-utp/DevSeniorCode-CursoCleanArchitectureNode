@@ -407,7 +407,7 @@ export abstract class DomainError extends Error {
 export class InvalidPropValueError extends DomainError {}
 ```
 
-Ahora, modelamos nuestros escenarios de fallo específicos en `src/domain/exceptions/FinancialErrors.ts`:
+Ahora, modelamos nuestros escenarios de fallo específicos en `src/domain/exceptions/FinancialError.ts`:
 
 ```typescript copy
 import { DomainError } from './DomainError';
@@ -489,7 +489,6 @@ classDiagram
         +TransactionStatus status
         +String description
         +Date createdAt
-        +execute()
     }
 
     Account "_" -- "1" User : owns
@@ -551,17 +550,17 @@ import {
   InsufficientBalanceError,
   AccountFrozenError,
   InvalidAmountError
-} from '../exceptions/FinancialErrors';
+} from '../exceptions/FinancialError';
 
 export type AccountStatus = 'ACTIVE' | 'FROZEN';
 
 export interface AccountProps {
-  id: string;
+  id?: string;
   accountNumber: string;
   balance: Decimal; // Blindaje contra el problema de punto flotante
   userId: string;
   status: AccountStatus;
-  createdAt: Date;
+  createdAt?: Date;
 }
 
 export class Account {
@@ -576,15 +575,18 @@ export class Account {
     if (props.balance.isNegative()) {
       throw new InvalidAmountError('Una cuenta no puede ser inicializada con saldo negativo.');
     }
+    if (!props.createAt) {
+      props.createdAt = new Date();
+    }
     return new Account(props);
   }
 
-  get id(): string { return this.props.id; }
+  get id(): string | undefined { return this.props.id; }
   get accountNumber(): string { return this.props.accountNumber; }
   get balance(): Decimal { return this.props.balance; }
   get userId(): string { return this.props.userId; }
   get status(): AccountStatus { return this.props.status; }
-  get createdAt(): Date { return this.props.createdAt; }
+  get createdAt(): Date | undefined { return this.props.createdAt; }
 
   // --- COMPORTAMIENTOS DEL DOMINIO ---
 
@@ -612,6 +614,10 @@ export class Account {
   public freeze(): void {
     this.props.status = 'FROZEN';
   }
+
+  public unfreeze(): void {
+    this.props.status = 'ACTIVE';
+  }
 }
 ```
 
@@ -624,7 +630,7 @@ Usaremos **Herencia** y una **Clase Abstracta** para modelar esto en `src/domain
 ```typescript copy
 import { Decimal } from 'decimal.js';
 import { DomainError } from '../exceptions/DomainError';
-import { InvalidAmountError } from '../exceptions/FinancialErrors';
+import { InvalidAmountError } from '../exceptions/FinancialError';
 
 export type TransactionStatus = 'PENDING' | 'COMPLETED' | 'FAILED';
 
@@ -643,12 +649,15 @@ export interface TransactionProps {
 export abstract class Transaction {
   protected props: TransactionProps;
 
-  constructor(props: TransactionProps) {
+  protected constructor(props: TransactionProps) {
+    this.props = props;
+  }
+
+  public static validateAmount(props: TransactionProps, errorMessage: string): void {
     // Invariante universal: Nadie procesa transacciones de $0 o sumas negativas.
     if (props.amount.lte(0)) {
-        throw new InvalidAmountError("El volumen monetario transaccional debe ser mayor a cero.");
+      throw new InvalidPropValueError(errorMessage);
     }
-    this.props = props;
   }
 
   get id(): string { return this.props.id; }
@@ -664,75 +673,79 @@ export abstract class Transaction {
   public markAsFailed(): void {
     this.props.status = 'FAILED';
   }
-
-  /**
-   * POLIMORFISMO: Cada tipo de transacción (Depósito, Retiro) tendrá
-   * su propia forma de ejecutarse en el futuro.
-   */
-  abstract execute(): void;
 }
 
 // ==========================================
 // SUBCLASES (Extensiones del Dominio)
 // ==========================================
 
+export interface DepositProps extends TransactionProps {
+  destinationAccountId: string;
+}
+
 export class Deposit extends Transaction {
-  private destinationAccountId: string;
+  private readonly destinationAccountId: string;
 
-  constructor(props: TransactionProps, destinationId: string) {
+  private constructor(props: DepositProps) {
     super(props);
-    this.destinationAccountId = destinationId;
+    this.destinationAccountId = props.destinationId;
   }
 
+  public static create(props: DepositProps): Deposit {
+    Transaction.validateAmount(props, "El monto del depósito debe ser mayor que cero.");
+    return new Deposit(props);
+  }
+  
   get destinationAccount(): string { return this.destinationAccountId; }
+}
 
-  execute(): void {
-    // Lógica futura específica para depósitos
-    this.markAsCompleted();
-  }
+export interface WithdrawalProps extends TransactionProps {
+  sourceAccountId: string;
 }
 
 export class Withdrawal extends Transaction {
-  private sourceAccountId: string;
+  private readonly sourceAccountId: string;
 
-  constructor(props: TransactionProps, sourceId: string) {
+  private constructor(props: WithdrawalProps) {
     super(props);
-    this.sourceAccountId = sourceId;
+    this.sourceAccountId = props.sourceAccountId;
+  }
+
+  public static create(props: WithdrawalProps): Withdrawal {
+    Transaction.validateAmount(props, "El monto del retiro debe ser mayor que cero.");
+    return new Withdrawal(props);
   }
 
   get sourceAccount(): string { return this.sourceAccountId; }
+}
 
-  execute(): void {
-    // Lógica futura específica para retiros
-    this.markAsCompleted();
-  }
+export interface TransferProps extends TransactionProps {
+  sourceAccountId: string;
+  destinationAccountId: string;
 }
 
 export class Transfer extends Transaction {
-  private sourceAccountId: string;
-  private destinationAccountId: string;
+  private readonly sourceAccountId: string;
+  private readonly destinationAccountId: string;
 
-  constructor(props: TransactionProps, sourceId: string, destId: string) {
+  private constructor(props: TransferProps) {
     super(props);
-    // Invariante de fraude básico
-    if (sourceId === destId) {
-        throw new DomainError("Alerta de Operación: No se permiten transferencias hacia la misma cuenta de origen.");
+    this.sourceAccountId = props.sourceAccountId;
+    this.destinationAccountId = props.destinationAccountId;
+  }
+
+  public static create(props: TransferProps): Transfer {
+    if (props.sourceAccountId === props.destinationAccountId) {
+      throw new InvalidPropValueError("La cuenta de origen y destino no pueden ser la misma.");
     }
-    this.sourceAccountId = sourceId;
-    this.destinationAccountId = destId;
+    
+    Transaction.validateAmount(props, "El monto de la transferencia debe ser mayor que cero.");
+    
+    return new Transfer(props);
   }
 
   get sourceAccount(): string { return this.sourceAccountId; }
   get destinationAccount(): string { return this.destinationAccountId; }
-
-  execute(): void {
-    /*
-       Nota Arquitectónica: La operación atómica real (restar de A y sumar a B en la Base de Datos)
-       NO ocurre aquí. Esta entidad solo representa el estado del movimiento.
-       El Caso de Uso (TransferMoneyUseCase) coordinará a la clase Account y a la Infraestructura.
-    */
-    this.markAsCompleted();
-  }
 }
 ```
 

@@ -212,7 +212,6 @@ classDiagram
     +TransactionStatus status
     +String description
     +Date createdAt
-    +execute()
   }
 
     Transaction <|-- Deposit
@@ -338,7 +337,7 @@ De esta forma, si mañana cambiamos Prisma por TypeORM o raw SQL, la lógica de 
         ports:
           - "5432:5432"
         volumes:
-          - postgres_data:/var/lib/postgresql/data
+          - postgres_data:/var/lib/postgresql/18/docker
 
       volumes:
         postgres_data:
@@ -468,13 +467,13 @@ model Transaction {
 Para aplicar este esquema a tu base de datos física, ejecuta la primera migración. Esto generará las tablas y actualizará el cliente de TypeScript:
 
 ```bash copy
-npx prisma migrate dev --name init_fintech_schema
+pnpm exec prisma migrate dev --name init_fintech_schema
 ```
 
 Ahora, generar el cliente Prisma:
 
 ```bash copy
-npx prisma generate
+pnpm exec prisma generate
 ```
 
 ### Paso 3: Data Mappers y Resolución del Polimorfismo
@@ -493,7 +492,7 @@ export class AccountMapper {
    * Convierte un registro de infraestructura a una entidad de dominio puro
    */
   public static toDomain(prismaAccount: PrismaAccount): Account {
-    return new Account({
+    return Account.create({
       id: prismaAccount.id,
       accountNumber: prismaAccount.accountNumber,
       balance: new Decimal(prismaAccount.balance), // Transformación segura de Decimal a valor manejable en TS
@@ -532,7 +531,7 @@ export class TransactionMapper {
     const amount = new Decimal(prismaTx.amount.toNumber());
     const txProps = {
       id: prismaTx.id,
-      amount,
+      amount: new Decimal(prismaTx.amount.toNumber()),
       status: prismaTx.status,
       description: prismaTx.description ?? '',
       createdAt: prismaTx.createdAt
@@ -542,17 +541,17 @@ export class TransactionMapper {
     switch (prismaTx.type) {
       case TransactionType.DEPOSIT:
         if (!prismaTx.destinationAccountId) throw new Error("Inconsistencia en DB: Deposit requiere destinationAccountId");
-        return new Deposit(txProps, prismaTx.destinationAccountId);
+        return Deposit.create({...txProps, destinationAccountId: prismaTx.destinationAccountId });
 
       case TransactionType.WITHDRAWAL:
         if (!prismaTx.sourceAccountId) throw new Error("Inconsistencia en DB: Withdrawal requiere sourceAccountId");
-        return new Withdrawal(txProps, prismaTx.sourceAccountId);
+        return Withdrawal.create({...txProps, sourceAccountId: prismaTx.sourceAccountId });
 
       case TransactionType.TRANSFER:
         if (!prismaTx.sourceAccountId || !prismaTx.destinationAccountId) {
             throw new Error("Inconsistencia en DB: Transfer requiere ambas cuentas (origen y destino)");
         }
-        return new Transfer(txProps, prismaTx.sourceAccountId, prismaTx.destinationAccountId);
+        return Transfer.create({...txProps, sourceAccountId: prismaTx.sourceAccountId, destinationAccountId: prismaTx.destinationAccountId });
 
       default:
         throw new Error(`Tipo de transacción desconocido o corrupto en DB: ${prismaTx.type}`);
@@ -599,28 +598,30 @@ Finalmente, implementamos la interfaz definida en nuestro dominio utilizando nue
 Crea `src/infrastructure/repositories/PrismaAccountRepository.ts`:
 
 ```typescript copy
-import { PrismaClient } from '@prisma/client';
-import { AccountRepository } from '../../domain/repositories/AccountRepository';
+import { PrismaClient } from '../../generated/prisma/client';
+import { AccountRepository } from '../../domain/repositories/Repositories';
 import { Account } from '../../domain/entities/Account';
 import { AccountMapper } from '../mappers/AccountMapper';
 
 export class PrismaAccountRepository implements AccountRepository {
   // Inyección de dependencias a través del constructor
-  constructor(private readonly prisma: PrismaClient) {}
+  constructor(private readonly prisma: PrismaClient) { }
 
-  async save(account: Account): Promise<void> {
+  async save(account: Account): Promise<Account> {
     const data = AccountMapper.toPersistence(account);
 
     // Utilizamos 'upsert' que funciona como "Insertar si no existe, Actualizar si ya existe"
     // Esto centraliza la lógica de persistencia en un solo método robusto.
-    await this.prisma.account.upsert({
+    const prismaAccount = await this.prisma.account.upsert({
       where: { id: account.id },
-      update: { 
-        balance: data.balance, 
-        status: data.status 
+      update: {
+        balance: data.balance,
+        status: data.status
       },
       create: data,
     });
+
+    return AccountMapper.toDomain(prismaAccount); // Retornamos la entidad de dominio tal como fue pasada, ya que no hay cambios en memoria
   }
 
   async findById(id: string): Promise<Account | null> {
@@ -629,9 +630,29 @@ export class PrismaAccountRepository implements AccountRepository {
     });
 
     if (!prismaAccount) return null;
-    
+
     // Inmediatamente traducimos la respuesta de Prisma a nuestro lenguaje de Dominio
     return AccountMapper.toDomain(prismaAccount);
+  }
+
+  async findByAccountNumber(accountNumber: string): Promise<Account | null> {
+    const prismaAccount = await this.prisma.account.findUnique({
+      where: { accountNumber }
+    });
+
+    if (!prismaAccount) return null;
+
+    // Inmediatamente traducimos la respuesta de Prisma a nuestro lenguaje de Dominio
+    return AccountMapper.toDomain(prismaAccount);
+  }
+
+  async findByUserId(userId: string): Promise<Account[]> {
+    const prismaAccounts = await this.prisma.account.findMany({
+      where: { userId }
+    });
+
+    // Inmediatamente traducimos las respuestas de Prisma a nuestro lenguaje de Dominio
+    return prismaAccounts.map(AccountMapper.toDomain);
   }
 }
 ```

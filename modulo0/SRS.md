@@ -220,7 +220,6 @@ classDiagram
         +TransactionStatus status
         +String description
         +Date createdAt
-        +execute()
     }
 
     Account "_" -- "1" User : owns

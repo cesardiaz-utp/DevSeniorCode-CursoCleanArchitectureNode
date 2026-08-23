@@ -1,5 +1,6 @@
 {
     "cSpell.words": [
+        "amnt",
         "antipatrón",
         "asincrónicos",
         "atómicamente",
@@ -89,6 +90,7 @@
         "sanitizar",
         "súbelo",
         "subóptimo",
+        "Subtipado",
         "superusuario",
         "systeminfo",
         "Testabilidad",
@@ -103,7 +105,9 @@
         "ultrarrápido",
         "underbrace",
         "usecases",
+        "VARCHAR",
         "virtualización",
-        "Virtualización"
+        "Virtualización",
+        "XVCJ"
     ]
 }
