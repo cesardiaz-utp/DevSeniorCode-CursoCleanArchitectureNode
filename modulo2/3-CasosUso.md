@@ -381,21 +381,25 @@ export class TransferMoneyUseCase {
       throw new AccountNotFoundError(destinationAccountId);
     }
 
-    // 6. Instanciar la Entidad de Dominio Transaction
+    // 6. Realizar los eventos con los métodos de la entidad de dominio (si es necesario)
+    sourceAccount.withdraw(transferAmount);
+    destinationAccount.deposit(transferAmount);
+    
+    // 7. Instanciar la Entidad de Dominio Transaction
     const transactionEntity = Transfer.create({
       amount: transferAmount,
-      status: "COMPLETED",
+      status: "PENDING",
       sourceAccountId,
       destinationAccountId,
       createdAt: new Date(),
       description: `Transferencia de ${transferAmount.toNumber()} desde la cuenta ${sourceAccountId} a la cuenta ${destinationAccountId}.`
-    );
+    });
 
-    // 7. Delegar la ejecución al repositorio pasando la entidad de dominio
+    // 8. Delegar la ejecución al repositorio pasando la entidad de dominio
     const savedTransaction = await this.accountRepository.executeTransaction(transactionEntity);
 
     return {
-      transactionId,
+      transactionId: savedTransaction.id!,
       sourceAccountId,
       destinationAccountId,
       amount: transferAmount.toNumber(),
@@ -422,38 +426,35 @@ export class PrismaAccountRepository implements AccountRepository {
    * Garantiza la atomicidad mediante prisma.$transaction interactivo.
    * Si cualquiera de las tres operaciones falla, PostgreSQL realiza un Rollback automático.
    */
-  async executeTransferTransaction(
-    sourceAccountId: string,
-    destinationAccountId: string,
-    amount: Decimal
-  ): Promise<string> {
+  async executeTransaction(transaction: Transaction): Promise<Transaction> {
+
     return await this.prisma.$transaction(async (tx) => {
-      // 1. Debitar saldo de la cuenta de origen
-      await tx.account.update({
-        where: { id: sourceAccountId },
-        data: { balance: { decrement: amount.toNumber() } },
-      });
+      // 1. Si existe cuenta de origen, debitar saldo (TRANSFER o WITHDRAWAL)
+      if ((transaction instanceof Transfer || transaction instanceof Withdrawal)
+          && transaction.sourceAccount) {
+        await tx.account.update({
+          where: { id: transaction.sourceAccount },
+          data: { balance: { decrement: transaction.amount.toNumber() } },
+        });
+      }
 
-      // 2. Acreditar saldo en la cuenta de destino
-      await tx.account.update({
-        where: { id: destinationAccountId },
-        data: { balance: { increment: amount.toNumber() } },
-      });
+      // 2. Si existe cuenta de destino, acreditar saldo (TRANSFER o DEPOSIT)
+      if ((transaction instanceof Transfer || transaction instanceof Deposit)
+          && transaction.destinationAccount) {
+        await tx.account.update({
+          where: { id: transaction.destinationAccount },
+          data: { balance: { increment: transaction.amount.toNumber() } },
+        });
+      }
 
-      // 3. Registrar el movimiento en el historial de transacciones
+      // 3. Persistir el registro de la transacción
+      transaction.markAsCompleted();
+      
       const transactionRecord = await tx.transaction.create({
-        data: {
-          id: crypto.randomUUID(),
-          amount: amount.toNumber(),
-          type: "TRANSFER",
-          status: "COMPLETED",
-          sourceAccountId,
-          destinationAccountId,
-          createdAt: new Date(),
-        },
+        data: TransactionMapper.toPersistence(transaction),
       });
 
-      return transactionRecord.id;
+      return TransactionMapper.toDomain(transactionRecord);
     });
   }
 }
@@ -628,7 +629,7 @@ Las Transacciones Atómicas (`prisma.$transaction`) se llevaron a `PrismaAccount
 
 1. **Implementación de Casos de Uso**:
     - Codificar los Casos de Uso explicados en clase: `CreateAccountUseCase`, `GetBalanceUseCase`, `TransferMoneyUseCase`.
-    -Implementar el repositorio de infraestructura `PrismaAccountRepository` utilizando `prisma.$transaction`.
+    - Implementar el repositorio de infraestructura `PrismaAccountRepository` utilizando `prisma.$transaction`.
 2. **Desarrollo Independiente (Reto Práctico)**:
     - Basándose en los requisitos **RF-3.1** y **RF-3.2** de la Especificación SRS, implementar los Casos de Uso restantes:
       - `DepositUseCase`: Recibe `accountId` y `amount`, valida el estado de la cuenta y aplica el crédito.

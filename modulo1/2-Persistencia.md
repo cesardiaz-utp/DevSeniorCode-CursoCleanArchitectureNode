@@ -362,7 +362,7 @@ pnpm add -D prisma dotenv
 Instalamos el Cliente de Prisma para ejecución
 
 ```bash copy
-pnpm add @prisma/client
+pnpm add @prisma/client @prisma/adapter-pg pg
 ```
 
 Inicializamos Prisma (Esto creará la carpeta prisma y el archivo .env)
@@ -473,7 +473,7 @@ pnpm exec prisma migrate dev --name init_fintech_schema
 Ahora, generar el cliente Prisma:
 
 ```bash copy
-pnpm exec prisma generate
+pnpm dlx prisma generate
 ```
 
 ### Paso 3: Data Mappers y Resolución del Polimorfismo
