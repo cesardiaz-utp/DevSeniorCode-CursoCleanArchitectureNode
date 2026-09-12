@@ -467,7 +467,7 @@ model Transaction {
 Para aplicar este esquema a tu base de datos física, ejecuta la primera migración. Esto generará las tablas y actualizará el cliente de TypeScript:
 
 ```bash copy
-pnpm exec prisma migrate dev --name init_fintech_schema
+pnpm dlx prisma migrate dev --name init_fintech_schema
 ```
 
 Ahora, generar el cliente Prisma:
