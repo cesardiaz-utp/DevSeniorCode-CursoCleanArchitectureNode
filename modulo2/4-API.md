@@ -1,4 +1,4 @@
-# Sesión 4: API REST, Autenticación y Seguridad
+# TEMA 4: API REST, Autenticación y Seguridad
 
 **Duración**: 2 horas (30 min Teoría / 90 min Práctica)
 
@@ -867,7 +867,6 @@ Ensamblaremos la aplicación instanciando las dependencias concretas (Inyección
 `src/presentation/app.ts`
 
 ```typescript copy
-import 'dotenv/config';
 import express, { Application } from 'express';
 import cors from 'cors';
 import { PrismaPg } from '@prisma/adapter-pg';

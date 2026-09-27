@@ -1,4 +1,4 @@
-# SESIÓN 1: Principios de Clean Architecture y Diseño de Dominio
+# TEMA 1: Principios de Clean Architecture y Diseño de Dominio
 
 **Duración**: 2 Horas (45 min Teoría / 75 min Práctica)
 
@@ -345,7 +345,7 @@ pnpm exec tsc --init
 ```json
 {
   "compilerOptions": {
-    "module": "nodenext",
+    "module": "commonjs",
     "target": "esnext",
     "types": ["node"],
 

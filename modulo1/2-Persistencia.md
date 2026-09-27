@@ -1,4 +1,4 @@
-# SESIÓN 2: Persistencia Relacional con PostgreSQL y Prisma ORM
+# TEMA 2: Persistencia Relacional con PostgreSQL y Prisma ORM
 
 **Duración**: 2 horas (30 min Teoría / 90 min Práctica)
 
@@ -467,13 +467,13 @@ model Transaction {
 Para aplicar este esquema a tu base de datos física, ejecuta la primera migración. Esto generará las tablas y actualizará el cliente de TypeScript:
 
 ```bash copy
-pnpm dlx prisma migrate dev --name init_fintech_schema
+pnpm exec prisma migrate dev --name init_fintech_schema
 ```
 
 Ahora, generar el cliente Prisma:
 
 ```bash copy
-pnpm dlx prisma generate
+pnpm exec prisma generate
 ```
 
 ### Paso 3: Data Mappers y Resolución del Polimorfismo

@@ -1,8 +1,6 @@
-# Sesión 5: Clean Architecture en el Frontend e Integración con React
+# TEMA 5: Clean Architecture en el Frontend e Integración con React
 
 **Duración**: 120 minutos (75 min de teoría / 35 min de práctica asistida por IA)
-
-**Módulo**: Arquitectura Frontend con React y TypeScript
 
 ## 1. Propósito de la sesión
 

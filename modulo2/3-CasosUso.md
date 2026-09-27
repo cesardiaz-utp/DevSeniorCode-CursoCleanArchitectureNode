@@ -1,4 +1,4 @@
-# Sesión 3: Casos de Uso Financieros y Transacciones Atómicas
+# TEMA 3: Casos de Uso Financieros y Transacciones Atómicas
 
 **Duración**: 2 horas (30 min Teoría / 90 min Práctica)
 

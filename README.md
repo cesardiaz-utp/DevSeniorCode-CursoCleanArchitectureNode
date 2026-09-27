@@ -11,20 +11,15 @@ A lo largo del programa, los estudiantes aplicarán los principios de **Clean Ar
 
 ## Módulo 1 - Arquitectura Limpia y Modelado del Dominio (Backend)
 
-- [Sesión 1](modulo1/1-CleanDDD.md) - Principios de Clean Architecture y Diseño de Dominio
-- [Sesión 2](modulo1/2-Persistencia.md) - Persistencia Relacional con PostgreSQL y Prisma ORM
+- [Tema 1](modulo1/1-CleanDDD.md) - Principios de Clean Architecture y Diseño de Dominio
+- [Tema 2](modulo1/2-Persistencia.md) - Persistencia Relacional con PostgreSQL y Prisma ORM
 
 ## Módulo 2 - Casos de uso y Servicios REST
 
-- [Sesión 3](modulo2/3-CasosUso.md) - Casos de Uso Financieros y Transacciones Atómicas
-- [Sesión 4](modulo2/4-API.md) - API REST, Autenticación y Seguridad
+- [Tema 3](modulo2/3-CasosUso.md) - Casos de Uso Financieros y Transacciones Atómicas
+- [Tema 4](modulo2/4-API.md) - API REST, Autenticación y Seguridad
 
-## Módulo 3 - Arquitectura Frontend con React y Typescript
+## Módulo 3 - Arquitectura Frontend con React e Integración Full Stack
 
-- [Sesión 5](modulo3/5-Frontend.md) - Arquitectura Frontend y Módulo de Autenticación
-- [Sesión 6](modulo3/6-a.md) - Dashboard Financiero y Gestión de Estado
-
-## Módulo 4 - Integración Full Stack y Calidad
-
-- [Sesión 7](modulo4/7-a.md) - Operaciones Financieras en Tiempo Real (Full Stack Integration)
-- [Sesión 8](modulo4/8-a.md) - Refactorización, Calidad, Seguridad y Cierre
+- [Tema 5](modulo3/5-Frontend.md) - Clean Architecture en el Frontend e Integración con React
+- [Tema 6](modulo3/6-Despliegue.md) - Despliegue en docker y en nube de Aplicaciones Full Stack
