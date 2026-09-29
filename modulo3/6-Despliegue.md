@@ -10,17 +10,16 @@ A lo largo de las sesiones anteriores hemos diseñado, modelado e implementado e
 
 No obstante, en la ingeniería de software profesional existe un axioma ineludible: **el software no genera valor mientras resida únicamente en el entorno local del desarrollador**. El clásico argumento *"en mi máquina sí funciona"* denota una falla estructural en el proceso de empaquetado, portabilidad y entrega de software.
 
-En esta sesión abordaremos la transición de un sistema monolítico desacoplado hacia un artefacto listo para producción. Comprenderemos la contenerización a bajo nivel, implementaremos empaquetados reproducibles mediante *Multi-stage builds*, orquestaremos servicios con persistencia en PostgreSQL 18, diseñaremos estrategias seguras para migraciones automáticas en arranques en frío, e introduciremos las bases de Integración y Entrega Continua (CI/CD) con gestión profesional de secretos.
+En esta sesión abordaremos la transición de un sistema monolítico desacoplado hacia un artefacto listo para producción. Comprenderemos la contenerización a bajo nivel, implementaremos empaquetados reproducibles mediante *Multi-stage builds*, orquestaremos servicios con persistencia en PostgreSQL 18, diseñaremos estrategias seguras para migraciones automáticas en arranques en frío, e introduciremos la gestión profesional de secretos.
 
 **Objetivos de la sesión:**
 
 1. Comprender los fundamentos de la contenerización frente a la virtualización tradicional y su rol en la paridad de entornos.
 2. Dominar la metodología de construcción multi-etapa (*Multi-stage builds*) para optimizar el peso, rendimiento y superficie de ataque de imágenes de Node.js (con `pnpm`) y React (con Nginx).
 3. Analizar la diferencia entre cargas de trabajo con estado (*stateful*) y sin estado (*stateless*), mitigando condiciones de carrera durante la migración de esquemas en bases de datos relacionales efímeras.
-4. Comprender la teoría de CI/CD (Integración Continua, Entrega Continua y Despliegue Continuo) y el ciclo de vida de un pipeline automatizado.
-5. Orquestar el sistema completo en local mediante `docker-compose` e implementar el despliegue en la nube gestionando variables de entorno según los principios de [*The Twelve-Factor App*](https://12factor.net/es/).
+4. Orquestar el sistema completo en local mediante `docker-compose` e implementar el despliegue en la nube gestionando variables de entorno según los principios de [*The Twelve-Factor App*](https://12factor.net/es/).
 
-## 2. MARCO TEÓRICO: Contenerización, Orquestación y CI/CD (30 min)
+## 2. MARCO TEÓRICO: Contenerización, Orquestación (30 min)
 
 ### 2.1. Máquinas Virtuales vs. Contenedores Docker
 
@@ -28,30 +27,29 @@ Tradicionalmente, desplegar implicaba configurar un servidor desde cero, instala
 
 **Docker** cambia este paradigma empaquetando el código, las dependencias y el sistema de archivos necesario en una unidad estandarizada llamada **Contenedor**.
 
-```mermaid
-graph TD
-  subgraph "Arquitectura Tradicional (VMs)"
-      HW1[Hardware] --> HostOS1[Host OS]
-      HostOS1 --> Hypervisor[Hypervisor]
-      Hypervisor --> VM1[VM 1: Node + API]
-      Hypervisor --> VM2[VM 2: Postgres DB]
-  end
-
-  subgraph "Arquitectura Docker (Contenedores)"
-      HW2[Hardware] --> HostOS2[Host OS]
-      HostOS2 --> DockerEngine[Docker Engine]
-      DockerEngine --> C1[Contenedor API]
-      DockerEngine --> C2[Contenedor DB]
-      DockerEngine --> C3[Contenedor Frontend]
-  end
-```
-
 #### 2.1.1. Máquinas Virtuales (VMs)
 
 Las máquinas virtuales operan mediante una capa de abstracción de hardware denominada **Hypervisor** (ej. VMware, Hyper-V, KVM). Cada máquina virtual emula por completo una placa madre, interfaces de red, CPU virtual y, crucialmente, ejecuta un **Sistema Operativo Invitado (Guest OS) completo**.
 
 - **Sobrecarga de recursos**: Una VM requiere gigabytes de memoria RAM y almacenamiento solo para el arranque de su propio kernel, módulos y demonios del sistema.
 - **Tiempos de arranque**: El ciclo de encendido requiere el inicio completo del sistema operativo huésped (del orden de decenas de segundos o minutos).
+
+```mermaid
+graph TD
+  subgraph "Arquitectura Tradicional (VMs)"
+      HW1[Hardware] --> HostOS1[Host OS]
+      HostOS1 --> Hypervisor[Hypervisor]
+      Hypervisor --> VM1[VM 1]
+      VM1 --> GuestOS1[Guest OS: Debian 12]
+      GuestOS1 --> Node[Node.js Runtime]
+      Hypervisor --> VM2[VM 2]
+      VM2 --> GuestOS2[Guest OS: Ubuntu 24.04]
+      GuestOS2 --> PostgreSQL[PostgreSQL 18]
+      Hypervisor --> VM3[VM 3]
+      VM3 --> GuestOS3[Guest OS: Fedora 40]
+      GuestOS3 --> Nginx[Nginx Web Server + React SPA]
+  end
+```
 
 #### 2.1.2. Contenedores (Containerization)
 
@@ -62,6 +60,17 @@ Un contenedor **no emula hardware ni ejecuta un kernel propio**. En su lugar, to
 3. **Union File System (UnionFS / OverlayFS)**: Permite superponer capas de archivos de solo lectura con una capa superior escribible efímera.
 
 **En resumen**: un contenedor no es una máquina virtual ligera; **un contenedor es un proceso estándar de Linux aislado mediante namespaces** y restringido por **cgroups**.
+
+```mermaid
+graph TD
+  subgraph "Arquitectura Docker (Contenedores)"
+      HW2[Hardware] --> HostOS2[Host OS]
+      HostOS2 --> DockerEngine[Docker Engine]
+      DockerEngine --> C1[Contenedor API]
+      DockerEngine --> C2[Contenedor DB]
+      DockerEngine --> C3[Contenedor Frontend]
+  end
+```
 
 ### 2.2. Anatomía de Imágenes, Estratificación y *Multi-Stage Builds*
 
@@ -86,7 +95,10 @@ flowchart LR
         A1[COPY . .] --> B1[pnpm install] --> C1[pnpm build]
         Note1[Cualquier cambio de 1 línea de código invalida la descarga de dependencias]
     end
+```
 
+```mermaid
+flowchart LR
     subgraph Flujo Optimizado con Cache de Capas
         A2[COPY package.json pnpm-lock.yaml] --> B2[pnpm install --frozen-lockfile]
         B2 --> C2[COPY . .]
@@ -149,46 +161,7 @@ El ciclo de arranque de nuestro contenedor backend debe implementar una orquesta
 
 $$\text{Arranque} \longrightarrow \text{Verificación de Conexión DB} \longrightarrow \text{Ejecución de Migraciones} \longrightarrow \text{Lanzamiento de API}$$
 
-### 2.4. Fundamentos de CI/CD (Integración, Entrega y Despliegue Continuo)
-
-La metodología DevOps y la entrega moderna de software se articulan en torno a pipelines automatizados:
-
-```mermaid
-flowchart LR
-    Dev[Push de Código] --> CI[CI: Continuous Integration]
-    CI --> CDeliv[CD: Continuous Delivery]
-    CDeliv --> CDeploy[CD: Continuous Deployment]
-
-    subgraph CI [Integración Continua]
-        Lint[Linting / Typing] --> UnitTests[Pruebas Unitarias]
-        UnitTests --> Build[Compilación / Empaque]
-    end
-
-    subgraph CDeliv [Entrega Continua]
-        Staging[Generación de Release] --> Approval[Aprobación Manual / Gate]
-    end
-
-    subgraph CDeploy [Despliegue Continuo]
-        AutoDeploy[Despliegue Automático a Producción]
-    end
-```
-
-#### 2.4.1. Integración Continua (CI - Continuous Integration)
-
-Práctica de desarrollo donde los miembros del equipo integran su trabajo de forma continua en el repositorio principal (generalmente `main` o `develop`). Cada integración desencadena la construcción automatizada del proyecto y la ejecución de la suite de pruebas.
-
-- **Objetivo**: Detectar errores de tipado, regresiones de código y fallos de integración tan pronto como se escriben, impidiendo la mezcla de código defectuoso.
-- **Herramientas**: GitHub Actions, GitLab CI, CircleCI, Jenkins.
-
-#### 2.4.2. Entrega Continua (CD - Continuous Delivery)
-
-Extensión de la Integración Continua donde el código validado se empaqueta automáticamente en un artefacto desplegable (por ejemplo, una imagen de Docker etiquetada y subida a un registro como Docker Hub o GitHub Packages). El artefacto está probado y listo para liberarse a producción, requiriendo únicamente una decisión o confirmación manual para su despliegue final.
-
-#### 2.4.3. Despliegue Continuo (CD - Continuous Deployment)
-
-Elimina por completo la aprobación manual. Cada cambio que pasa exitosamente todas las etapas del pipeline de CI/CD se despliega automáticamente en los entornos de producción en tiempo real. Requiere una cobertura de pruebas exhaustiva y mecanismos de telemetría y reversión (*rollback*) inmediata.
-
-### 2.5. Gestión de Secretos y Configuración según *The Twelve-Factor App*
+### 2.4. Gestión de Secretos y Configuración según *The Twelve-Factor App*
 
 El estándar arquitectónico para el desarrollo de aplicaciones nativas en la nube (*Twelve-Factor App*) establece en su **Tercer Factor (Configuración)**: *Almacena la configuración en el entorno*.
 
